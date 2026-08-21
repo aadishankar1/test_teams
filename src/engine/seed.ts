@@ -28,6 +28,10 @@ export interface SeedOptions {
  * A plausible history: mostly-closing weekdays, lighter weekends, and the
  * occasional big day that laps the Move ring — enough variety to exercise the
  * renderer's overflow path.
+ *
+ * Effort trends gently upward toward `endDate` so the most recent days carry a
+ * live streak. Without that the demo board opens on a zero streak and a
+ * half-empty set of rings, which shows the UI at its least interesting.
  */
 export function generateHistory(options: SeedOptions): DayEntry[] {
   const { endDate, days = 30, goals = DEFAULT_GOALS, seed = 20260821 } = options;
@@ -38,14 +42,18 @@ export function generateHistory(options: SeedOptions): DayEntry[] {
     const date = addDays(endDate, -offset);
     const weekday = new Date(`${date}T00:00:00Z`).getUTCDay();
     const isWeekend = weekday === 0 || weekday === 6;
-    const effort = (isWeekend ? 0.55 : 0.85) + random() * 0.5;
+
+    // 0 for the oldest day, 1 for `endDate`.
+    const recency = days > 1 ? (days - 1 - offset) / (days - 1) : 1;
+    const trend = 0.2 * recency;
+    const effort = (isWeekend ? 0.72 : 0.95) + trend + random() * 0.4;
     const lapDay = random() < 0.12;
 
     entries.push({
       date,
       move: Math.round(goals.move * effort * (lapDay ? 2.1 : 1)),
       exercise: Math.round(goals.exercise * effort),
-      stand: Math.min(24, Math.round(goals.stand * (0.7 + random() * 0.5))),
+      stand: Math.min(24, Math.round(goals.stand * (0.82 + trend + random() * 0.45))),
     });
   }
 
