@@ -1,0 +1,19 @@
+{
+  "name": "rings",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Apple-style Activity Rings + widget board",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10",
+    "vitest": "^2.1.4"
+  }
+}
