@@ -3,22 +3,28 @@ import { createEngine, toIsoDate, type RingsEngine } from './engine/index.js';
 /**
  * App entry point. Track A owns the engine wiring; Track B owns rendering.
  *
- * The UI is resolved at runtime so the two tracks can land independently: once
- * `src/ui/index.ts` exports `mountRings`, it takes over automatically and the
- * dev harness below stops being used. The specifier is held in a variable so
- * this typechecks and builds before that file exists.
+ * The UI is discovered with `import.meta.glob` rather than a plain dynamic
+ * import: the glob is resolved at BUILD time, so Track B's `src/ui/index.ts`
+ * gets bundled properly the moment it lands, and the map is simply empty while
+ * it doesn't exist. A dynamic import of a variable specifier would look fine on
+ * the dev server and then 404 in a production build, which is exactly the kind
+ * of failure nobody notices until after a release.
  */
 interface RingsUiModule {
   mountRings?: (root: HTMLElement, engine: RingsEngine) => void;
 }
 
-const UI_ENTRY = './ui/index.js';
+const UI_ENTRY = './ui/index.ts';
 
 async function loadUi(): Promise<RingsUiModule | undefined> {
+  const modules = import.meta.glob<RingsUiModule>('./ui/index.ts');
+  const load = modules[UI_ENTRY];
+  if (!load) return undefined;
+
   try {
-    return (await import(/* @vite-ignore */ UI_ENTRY)) as RingsUiModule;
-  } catch {
-    // Track B's UI has not landed yet.
+    return await load();
+  } catch (error) {
+    console.error('Rings UI failed to load; falling back to the dev harness.', error);
     return undefined;
   }
 }
